@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();
 
+const userRoutes = require("./routes/user.route");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -10,12 +12,21 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-const start = async () => {
-  const connectMongoDB = await mongoose.connect(process.env.MONGO_URL);
+// Routes ...
+app.use(userRoutes);
 
-  app.listen(process.env.PORT, () => {
-    console.log("Server start at 3000");
-  });
+// Start Server ...
+const start = async () => {
+  try {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log("MongoDB connected successfully");
+
+    app.listen(PORT, () => {
+      console.log(`Server started at http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("MongoDB connection failed:", error.message);
+  }
 };
 
 start();
