@@ -1,6 +1,7 @@
 const User = require("../models/user.model");
 const Profile = require("../models/profile.model");
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 
 const register = async (req,res) => {
     try{
@@ -41,4 +42,33 @@ const register = async (req,res) => {
     }
 }
 
-module.exports = register;
+const login = async (req,res) => {
+    try{
+        const {email, password} = req.body;
+
+        if(!email || !password) {
+            return res.status(400).json({message: "All Field require..."});
+        }
+
+        const user = await User.findOne({
+            email
+        });
+
+        if(!user)
+            return res.status(404).json({message: "User does not exist..."})
+
+        const isMatch = await bcrypt.compare(password, user.password);
+        if(!isMatch) return res.status(400).json({message: "Invalid Credentials"})
+        
+        const token = crypto.randomBytes(32).toString("hex");
+
+        await User.updateOne({_id: user._id}, {token});
+
+        return res.json({token});
+
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+module.exports = {register, login};
