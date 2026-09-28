@@ -71,4 +71,25 @@ const login = async (req,res) => {
     }
 }
 
-module.exports = {register, login};
+const uploadProfilePicture = async (req, res) => {
+    const {token} = req.body;
+
+    try{
+        const user = await User.findOne({token: token});
+
+        if(!user){
+            return res.status(404).json({message: "User not found..."});
+        }
+
+        user.profilePicture = req.file.filename;
+
+        await user.save();
+
+        return res.json({message: "Profile Picture Updated..."});
+        
+    } catch (error) {
+        return res.status(500).json({mesaage : error.mesaage});
+    }
+}
+
+module.exports = {register, login, uploadProfilePicture};
