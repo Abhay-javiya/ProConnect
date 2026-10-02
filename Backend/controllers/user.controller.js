@@ -92,4 +92,37 @@ const uploadProfilePicture = async (req, res) => {
     }
 }
 
-module.exports = {register, login, uploadProfilePicture};
+const updateUserProfile = async (req, res) => {
+    try{
+        const {token, ...newUser} = req.body;
+
+        const user = await User.findOne({token: token});
+
+        if(!user){
+            return res.status(404).json({message: "User not Found..."});
+        }
+
+        const {username, email} = newUser;
+
+        const existingUser = await User.findOne({ $or: [{username}, {email}] });
+
+        if(existingUser){
+            if(existingUser || String(existingUser._id) !== String(user._id)){
+                return res.status(400).json({message: "User already exist..."});
+            }
+        }
+
+        Object.assign(user, newUser);
+
+        await user.save();
+
+        return res.json({message: "User Updated ..."});
+
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}
+
+
+
+module.exports = {register, login, uploadProfilePicture, updateUserProfile};
