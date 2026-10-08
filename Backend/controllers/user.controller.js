@@ -2,6 +2,35 @@ const User = require("../models/user.model");
 const Profile = require("../models/profile.model");
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const {PDFDocument } = require('pdfkit');
+const fs = require('fs');
+
+const convertUserDataTOPDF = async (userData) => {
+    const doc = new PDFDocument();
+
+    const outputpath = crypto.randomBytes(32).toString("hex") + ".pdf";
+    const stream = fs.createWriteStream("uploads/" + outputpath);
+
+    doc.pipe(stream);
+
+    doc.image(`uploads/${userData.userId.profilePicture}`, { align: 'center', width: 100 });
+    doc.fontSize(14).text(`Name: ${userData.userId.name}`);
+    doc.fontSize(14).text(`Email: ${userData.userId.email}`);
+    doc.fontSize(14).text(`Username: ${userData.userId.username}`);
+    doc.fontSize(14).text(`Bio: ${userData.Bio}`);
+    doc.fontSize(14).text(`Current Position: ${userData.currentPosition}`);
+
+    doc.fontSize(14).text("Past Work: ")
+    userData.pastWork.forEach((work, index) => {
+        doc.fontSize(14).text(`Company Name : ${work.companyName}`);
+        doc.fontSize(14).text(`Position : ${work.position}`);
+        doc.fontSize(14).text(`Years : ${work.years}`);
+    });
+
+    doc.end();
+
+    return outputpath;
+}
 
 const register = async (req,res) => {
     try{
@@ -123,6 +152,82 @@ const updateUserProfile = async (req, res) => {
     }
 }
 
+const getUserAndProfile = async (req, res) => {
+    try{
+        const {token} = req.body;
 
+        const user = await User.findOne({token: token});
 
-module.exports = {register, login, uploadProfilePicture, updateUserProfile};
+        if(!user){
+            return res.status(404).json({message: "User already exist..."});
+        }
+
+        const updateProfile = await Profile.findOne({userId: user._id})
+            .populate('userId', 'name email, username, profilePicture');
+
+        return res.json(updateProfile);
+
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+const updateProfileData = async (req, res) => {
+    try{
+        const {token, ...newProfile} = req.body;
+
+        const userProfile = await User.findOne({token: token});
+
+        if(!userProfile){
+            return res.status(404).json({message: "User not Found..."});
+        }
+
+        const profile_to_update = await Profile.findOne({userId: userProfile._id});
+
+        Object.assign(profile_to_update, newProfile); 
+
+        await profile_to_update.save();
+
+        return res.json({message: "Profile Updated..."});
+
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+const getAllUserProfiles = async (req, res) => {
+    try{
+        const profiles = await Profile.find().populate('userId', 'name email username profilePicture'); 
+
+        return res.json({ profiles });
+
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+const downloadProfile = async (req, res) => {
+    try {
+        const user_Id = req.params.id;
+
+        const userProfile = await Profile.findOne({ userId: user_Id })
+        .populate('userId', 'name email username profilePicture');
+
+        let a = await convertUserDataTOPDF(userProfile);
+
+        return res.json({ "message": a });
+
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+module.exports = {
+    register, 
+    login, 
+    uploadProfilePicture, 
+    updateUserProfile, 
+    getUserAndProfile, 
+    updateProfileData, 
+    getAllUserProfiles,
+    downloadProfile
+};

@@ -17,3 +17,31 @@ Content-Type: application/json
     "password": "12345"
 }
 
+###
+GET http://localhost:3000/get_user_and_profile
+Content-Type: application/json
+
+{
+    "token": "141176e4a30897c1bf0a94c453911eefc61d221f94c36f4367250ea81b1cdd76"
+}
+
+###
+POST http://localhost:3000/update_profile_data
+Content-Type: application/json
+
+
+{
+    "token": "141176e4a30897c1bf0a94c453911eefc61d221f94c36f4367250ea81b1cdd76",
+    "bio": "MERN Developer",
+    "education": [
+        {
+            "degree": "B.Tech",
+            "institution": "XYZ University",
+            "year": 2022
+        }
+    ]
+}
+
+###
+GET http://localhost:3000/user/get_all_users
+
