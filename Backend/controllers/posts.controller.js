@@ -122,9 +122,32 @@ const delete_comment_of_user = async (req, res) => {
     }
 }
 
+const Increment_Likes = async (req, res) => {
+    try{
+        const {post_id} = req.body;
+
+        const post = await Post.findOne({_id: post_id});
+
+        if(!post){
+            return res.status(404).json({message : "Post not found"});
+        }
+
+        post.likes += 1;
+        await post.save();
+
+        return res.json({message : "Likes incremented successfully..."});
+
+    } catch (error){
+        return res.status(500).json({message : error.message});
+    }
+}
+
 module.exports = {
     activeCheck,
     createPost,
     getAllPosts,
-    deletePost
+    deletePost,
+    get_comments_by_post,
+    delete_comment_of_user,
+    Increment_Likes
 };
