@@ -4,7 +4,9 @@ const multer = require('multer');
 
 const {
     activeCheck,
-    createPost
+    createPost,
+    getAllPosts,
+    deletePost
 } = require("../controllers/posts.controller");
 
 const storage = multer.diskStorage({
@@ -19,7 +21,10 @@ const storage = multer.diskStorage({
 const upload = multer({storage: storage});
 
 router.get("/active", activeCheck);
+
 router.post("/post", upload.single('media'), createPost);
+router.get("/posts", getAllPosts);
+router.post("/delete_post", deletePost);
 
 
 module.exports = router;
