@@ -18,11 +18,11 @@ const convertUserDataTOPDF = async (userData) => {
     doc.fontSize(14).text(`Email: ${userData.userId.email}`);
     doc.fontSize(14).text(`Username: ${userData.userId.username}`);
     doc.fontSize(14).text(`Bio: ${userData.Bio}`);
-    doc.fontSize(14).text(`Current Position: ${userData.currentPosition}`);
+    doc.fontSize(14).text(`Current Post: ${userData.currentPost}`);
 
     doc.fontSize(14).text("Past Work: ")
     userData.pastWork.forEach((work, index) => {
-        doc.fontSize(14).text(`Company Name : ${work.companyName}`);
+        doc.fontSize(14).text(`Company Name : ${work.company}`);
         doc.fontSize(14).text(`Position : ${work.position}`);
         doc.fontSize(14).text(`Years : ${work.years}`);
     });
@@ -221,6 +221,120 @@ const downloadProfile = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 }
+
+const sendConnectionRequest = async (req, res) => {
+    try {
+        const { token, connectionId } = req.body; 
+        
+        const user = await User.findOne({ token });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found..." });
+        }
+
+        const connectionUser = await User.findById({ _id: connectionId });
+
+        if (!connectionUser) {
+            return res.status(404).json({ message: "Connection user not found..." });
+        }
+
+        const existingRequest = await ConnectionRequest.findOne(
+            { 
+                userId: user._id, 
+                connectionId: connectionUser._id 
+            }
+        );
+
+        if (existingRequest) {
+            return res.status(400).json({ message: "request already sent..." });
+        }
+
+        const newRequest = new ConnectionRequest({
+            userId: user._id,
+            connectionId: connectionUser._id
+        });
+
+        await newRequest.save();
+
+        return res.json({ message: "Connection request sent successfully..." });
+
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+const getMyconnectionRequests = async (req, res) => {
+    try {
+        const { token } = req.body; 
+
+        const user = await User.findOne({ token });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found..." });
+        }
+
+        const connections = await ConnectionRequest.find({ userId: user._id })
+            .populate('connectionId', 'name email username profilePicture');
+
+        return res.json({ connections });
+
+
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+const whatsMyConnectionStatus = async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        const user = await User.findOne({ token });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found..." });
+        }
+
+        const connections = await ConnectionRequest.find({ connectioId: user._id })
+            .populate('userId', 'name email username profilePicture');
+
+        return res.json(connections);
+
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
+const acceptConnectionRequest = async (req, res) => {  
+    try {
+        const { token, requestId, action_type } = req.body;
+
+        const user = await User.findOne({ token });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found..." });
+        }
+
+        const connection = await ConnectionRequest.findById({ _id: requestId });
+
+        if (!connection) {
+            return res.status(404).json({ message: "Connection request not found..." });
+        }
+
+        if(action_type === "accept") {
+            connection.status_accepted = true;
+        } else{
+            connection.status_accepted = false;
+        }
+
+        await connection.save();
+
+        return res.json({ message: "Connection request updated successfully..." });
+
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    } 
+}
+
 module.exports = {
     register, 
     login, 
@@ -229,5 +343,9 @@ module.exports = {
     getUserAndProfile, 
     updateProfileData, 
     getAllUserProfiles,
-    downloadProfile
+    downloadProfile,
+    sendConnectionRequest,
+    getMyconnectionRequests,
+    whatsMyConnectionStatus,
+    acceptConnectionRequest
 };

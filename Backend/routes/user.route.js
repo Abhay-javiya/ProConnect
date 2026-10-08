@@ -9,7 +9,11 @@ const {
     getUserAndProfile, 
     updateProfileData, 
     getAllUserProfiles,
-    downloadProfile
+    downloadProfile,
+    sendConnectionRequest,
+    getMyconnectionRequests,
+    whatsMyConnectionStatus,
+    acceptConnectionRequest
 } = require("../controllers/user.controller");
 
 const storage = multer.diskStorage({
@@ -31,5 +35,9 @@ router.get('/get_user_and_profile', getUserAndProfile);
 router.post('/update_profile_data', updateProfileData);
 router.get('/user/get_all_users', getAllUserProfiles);
 router.get('/user/download_resume', downloadProfile);
+router.post('/user/send_connection_request', sendConnectionRequest);
+router.post('/user/getConnectionRequests', getMyconnectionRequests);
+router.post('/user/user_connection_request', whatsMyConnectionStatus);
+router.post('/user/accept_connection_request', acceptConnectionRequest);
 
 module.exports = router;
